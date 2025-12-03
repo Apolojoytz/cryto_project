@@ -1,0 +1,38 @@
+[
+  {
+    "index": 0,
+    "timestamp": "2025-12-03T00:58:47.530182",
+    "data": {
+      "type": "genesis",
+      "message": "Online Voting System Blockchain Initialized",
+      "timestamp": "2025-12-03T00:58:47.530162",
+      "system": "Secure Voting System v1.0"
+    },
+    "previous_hash": "0",
+    "hash": "000b83fdbad746082c354554b1842b5e2a4399f8b08f5e46bb13e5ed9e6ceb5b",
+    "nonce": 2783
+  },
+  {
+    "index": 1,
+    "timestamp": "2025-12-03T00:59:20.843060",
+    "data": {
+      "type": "vote",
+      "data": {
+        "voter_email": "shakalaboomboom4t5@gmail.com",
+        "voter_username": "Apolo",
+        "session_id": 2,
+        "session_name": "Top_hyper",
+        "candidate_id": 1,
+        "candidate_name": "Nha_kach",
+        "candidate_party": "dai_haya",
+        "vote_id": "da217eb264209d44",
+        "timestamp": "2025-12-03T00:59:20.842975"
+      },
+      "timestamp": "2025-12-03T00:59:20.842992",
+      "transaction_id": "6e2cec8e70cc54d4"
+    },
+    "previous_hash": "000b83fdbad746082c354554b1842b5e2a4399f8b08f5e46bb13e5ed9e6ceb5b",
+    "hash": "000c1c467b5878b2d1a392e512534f2bf709b8ba64b4c96f6e8bc85fabca915a",
+    "nonce": 434
+  }
+]
