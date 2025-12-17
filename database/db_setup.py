@@ -30,10 +30,10 @@ def create_database():
         print(f"❌ Error creating database: {e}")
         return None, None
 
-
 def setup_tables():
     """Create all necessary tables"""
     print("🔧 Setting up database tables...")
+    
     # Create database first
     connection, cursor = create_database()
     if not connection:
@@ -57,7 +57,7 @@ def setup_tables():
         )
         """)
         print("✅ Created 'users' table")
-        
+
         # Voting verification table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS voting_verification (
@@ -136,6 +136,23 @@ def setup_tables():
         """)
         print("✅ Created 'otp_codes' table")
         
+        # Blockchain table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS blockchain_blocks (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            block_index INT NOT NULL,
+            block_hash VARCHAR(255) UNIQUE NOT NULL,
+            previous_hash VARCHAR(255) NOT NULL,
+            timestamp VARCHAR(100) NOT NULL,
+            data JSON NOT NULL,
+            nonce INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_block_index (block_index),
+            INDEX idx_block_hash (block_hash)
+        )
+        """)
+        print("✅ Created 'blockchain_blocks' table")
+
         connection.commit()
         print("\n✅ All tables created successfully!")
         return True

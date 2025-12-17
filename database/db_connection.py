@@ -13,14 +13,15 @@ def get_db_connection():
         return None
 
 def execute_query(query, params=None, fetch=False, fetch_one=False, lastrowid=False):
-    """Execute SQL query"""
+    """Execute SQL query with proper error handling"""
     connection = get_db_connection()
     if not connection:
         return None
     
     cursor = None
     try:
-        cursor = connection.cursor(dictionary=True)
+        # Use buffered cursor to handle unread results
+        cursor = connection.cursor(dictionary=True, buffered=True)
         cursor.execute(query, params or ())
         
         if fetch:
@@ -34,9 +35,17 @@ def execute_query(query, params=None, fetch=False, fetch_one=False, lastrowid=Fa
             connection.commit()
             result = cursor.rowcount
         
+        # Consume any remaining results
+        try:
+            cursor.fetchall()
+        except:
+            pass
+        
         return result
     except Error as e:
         print(f"❌ Database error: {e}")
+        print(f"Query: {query}")
+        print(f"Params: {params}")
         connection.rollback()
         return None
     finally:

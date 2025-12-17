@@ -1,17 +1,9 @@
 # voting_system/admin/voting/create_voting.py
 from datetime import datetime, timedelta
 from database.db_connection import execute_query
-from config import ADMIN_EMAIL
-
-# Try to import blockchain
-try:
-    from blockchain.voting_blockchain import voting_blockchain
-    BLOCKCHAIN_AVAILABLE = True
-except ImportError:
-    BLOCKCHAIN_AVAILABLE = False
 
 def create_voting_session():
-    """Create a new voting session"""
+    """Create a new voting session with simplified inputs"""
     print("\n" + "="*40)
     print("🗳️  CREATE VOTING SESSION")
     print("="*40)
@@ -80,7 +72,7 @@ def create_voting_session():
         input("Press Enter to continue...")
         return False
     
-    # Get duration - THIS IS WHERE WE GET duration_minutes
+    # Get duration
     print("\n⏰ Voting Duration:")
     print("1. 10 minutes")
     print("2. 30 minutes") 
@@ -102,7 +94,7 @@ def create_voting_session():
     }
     
     if duration_choice in duration_options:
-        duration_minutes = duration_options[duration_choice]  # DEFINE duration_minutes HERE
+        duration_minutes = duration_options[duration_choice]
     elif duration_choice == '7':
         try:
             custom_minutes = int(input("Enter duration in minutes: ").strip())
@@ -121,7 +113,7 @@ def create_voting_session():
         print("⚠️  Invalid choice. Defaulting to 1 hour.")
         duration_minutes = 60
     
-    # NOW duration_minutes IS DEFINED! Calculate start and end times
+    # Calculate start and end times
     current_time = datetime.now()
     start_time = current_time
     end_time = current_time + timedelta(minutes=duration_minutes)
@@ -147,7 +139,7 @@ def create_voting_session():
         input("Press Enter to continue...")
         return False
     
-    # Add candidates to database
+    # Add candidates
     for candidate in candidates:
         candidate_query = """
         INSERT INTO candidates (session_id, name, gender, position, votes)
@@ -156,19 +148,6 @@ def create_voting_session():
         execute_query(candidate_query, 
             (session_id, candidate['name'], candidate['gender'], candidate['position'])
         )
-    
-    # RECORD ON BLOCKCHAIN (if available)
-    if BLOCKCHAIN_AVAILABLE and session_id:
-        print("\n⛓️  Recording session on blockchain...")
-        block_hash = voting_blockchain.record_session_creation(
-            session_id, 
-            name, 
-            ADMIN_EMAIL
-        )
-        
-        if block_hash:
-            print("✅ Voting session recorded on blockchain!")
-            print(f"📦 Block Hash: {block_hash[:16]}...")
     
     # Display summary
     print("\n" + "="*40)

@@ -2,14 +2,6 @@
 from datetime import datetime
 from database.db_connection import execute_query
 
-# Try to import blockchain
-try:
-    from blockchain.voting_blockchain import voting_blockchain
-    BLOCKCHAIN_AVAILABLE = True
-except ImportError:
-    BLOCKCHAIN_AVAILABLE = False
-    print("⚠️  Blockchain module not available")
-
 def get_user_by_email(email):
     """Get user by email"""
     query = """
@@ -54,7 +46,7 @@ def check_user_voted(session_id, email):
     return execute_query(query, (session_id, email), fetch_one=True) is not None
 
 def cast_vote(session_id, email, candidate_id, candidate_name):
-    """Cast a vote in database"""
+    """Cast a vote"""
     # Insert vote
     vote_query = """
     INSERT INTO votes (session_id, user_email, candidate_id)
@@ -64,6 +56,9 @@ def cast_vote(session_id, email, candidate_id, candidate_name):
     
     if not vote_result:
         return False
+    
+    # Get the vote ID that was just created
+    vote_id = vote_result
     
     # Update candidate votes
     update_candidate = "UPDATE candidates SET votes = votes + 1 WHERE id = %s"
@@ -81,10 +76,23 @@ def cast_vote(session_id, email, candidate_id, candidate_name):
     """
     execute_query(update_user, (candidate_name, session_id, email))
     
+    # 🔴 CRITICAL FIX: Add vote to blockchain IMMEDIATELY
+    try:
+        # Import here to avoid circular imports
+        from blockchain.vote_verification import add_vote_to_blockchain
+        success = add_vote_to_blockchain(vote_id, email, candidate_id, session_id)
+        if success:
+            print("✅ Vote added to blockchain for verification")
+        else:
+            print("⚠️  Vote recorded but blockchain addition failed")
+    except Exception as e:
+        print(f"⚠️  Blockchain error: {e}")
+        # Continue anyway - vote is already recorded in database
+    
     return True
 
 def vote(email):
-    """Handle the voting process with blockchain recording"""
+    """Handle the voting process"""
     print("\n" + "="*40)
     print("CAST YOUR VOTE")
     print("="*40)
@@ -119,7 +127,7 @@ def vote(email):
         return False
     
     # Display voting session info
-    print(f"\n🗳️  Voting Session: {active_session['name']}")
+    print(f"\n🗳  Voting Session: {active_session['name']}")
     if active_session.get('description'):
         print(f"📝 Description: {active_session['description']}")
     
@@ -169,38 +177,12 @@ def vote(email):
         input("Press Enter to continue...")
         return False
     
-    # Cast the vote in database
+    # Cast the vote
     if cast_vote(active_session['id'], email, selected_candidate['id'], selected_candidate['name']):
-        # ✅✅✅ CRITICAL: RECORD ON BLOCKCHAIN ✅✅✅
-        if BLOCKCHAIN_AVAILABLE:
-            print("\n⛓️  Recording vote on blockchain...")
-            try:
-                block_hash = voting_blockchain.record_vote(
-                    active_session['id'],
-                    email,
-                    selected_candidate['id'],
-                    selected_candidate['name']
-                )
-                
-                if block_hash:
-                    print("✅ Vote recorded on blockchain!")
-                    print(f"📦 Block Hash: {block_hash[:16]}...")
-                    
-                    # Also show in blockchain audit
-                    print(f"📝 Added to block #{len(voting_blockchain.blockchain.chain)-1}")
-                else:
-                    print("⚠️  Vote recorded in database but blockchain recording failed")
-            except Exception as e:
-                print(f"⚠️  Blockchain error: {e}")
-                print("   Vote saved to database but not to blockchain")
-        else:
-            print("⚠️  Blockchain not available - vote saved to database only")
-        
         print("\n" + "="*40)
         print("✅ YOUR VOTE HAS BEEN RECORDED!")
         print(f"You voted for: {selected_candidate['name']}")
         print(f"Session: {active_session['name']}")
-        print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("="*40)
     else:
         print("❌ Failed to record your vote. Please try again.")

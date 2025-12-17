@@ -4,13 +4,6 @@ import shutil
 from database.db_connection import execute_query
 from config import ID_CARD_FOLDER
 
-# Try to import blockchain (might not exist yet)
-try:
-    from blockchain.voting_blockchain import voting_blockchain
-    BLOCKCHAIN_AVAILABLE = True
-except ImportError:
-    BLOCKCHAIN_AVAILABLE = False
-
 def get_user_by_email(email):
     """Get user by email"""
     query = "SELECT voting_verified FROM users WHERE email = %s"
@@ -47,7 +40,7 @@ def voting_verification(email):
         input("Press Enter to continue...")
         return True
 
-    # Get user information - DEFINE VARIABLES HERE
+    # Get user information
     fullname = input("Full Name: ").strip()
     if not fullname:
         print("❌ Full name cannot be empty.")
@@ -86,7 +79,7 @@ def voting_verification(email):
 
     # Copy ID card to database folder
     save_filename = f"{email}_{os.path.basename(image_path)}"
-    save_path = os.path.join(ID_CARD_FOLDER, save_filename)  # DEFINE save_path HERE
+    save_path = os.path.join(ID_CARD_FOLDER, save_filename)
     
     try:
         shutil.copy(image_path, save_path)
@@ -106,20 +99,6 @@ def voting_verification(email):
 
     # Update user verification status
     update_user_voting_status(email)
-
-    # RECORD ON BLOCKCHAIN (if available)
-    if BLOCKCHAIN_AVAILABLE:
-        print("\n⛓️  Recording verification on blockchain...")
-        verification_data = {
-            "fullname": fullname,
-            "gender": gender,
-            "phone": phone
-        }
-        block_hash = voting_blockchain.record_user_verification(email, verification_data)
-        
-        if block_hash:
-            print("✅ Verification recorded on blockchain!")
-            print(f"📦 Block Hash: {block_hash[:16]}...")
 
     print("\n" + "="*40)
     print("✅ Voting verification completed successfully!")
